@@ -1,7 +1,8 @@
 import csv
 import numpy as np
 import sys
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
 import copy
 import datetime
 
@@ -77,12 +78,18 @@ def calc_distance_over_time_averagevectorsfirst(vectors_over_time, words_to_aver
     return retbothaveraged, retfirstaveraged, retsecondaveraged
 
 def load_vectors(filename):
-    print filename
+    print (filename)
     vectors = {}
-    with open(filename, 'r') as f:
-        reader = csv.reader(f, delimiter = ' ')
-        for row in reader:
-            vectors[row[0]] = [float(x) for x in row[1:] if len(x) >0]
+    try:
+        with open(filename, 'r') as f:
+            reader = csv.reader(f, delimiter = ' ')
+            for row in reader:
+                # print(f"row[0] {row[0]}")
+                if len(row[1:]) >0:
+                    # print (f"row[1:] {row[1:]}")
+                    vectors[row[0]] = [float(x) for x in row[1:] if len(x) >0]
+    except Exception as e:
+        print(f"Exception {e} in file {filename}")
     return vectors
 
 def load_vectors_over_time(filenames):
@@ -225,7 +232,7 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             for grouplist in group_lists:
                 with open('data/'+grouplist + '.txt', 'r') as f2:
-                    print neut, grouplist
+                    print (neut, grouplist)
                     groupwords = [x.strip() for x in list(f2)]
                     distances = single_set_distances_to_single_set(vectors_over_time, neutwords, groupwords, vocabd)
 
@@ -253,10 +260,11 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             d['indiv_distances_neutral_'+neut] = dloc_neutral
 
-    with open('run_results/'+csvname, 'ab') as cf:
+    # with open('run_results/'+csvname, 'ab') as cf:
+    with open('run_results/'+csvname, 'a') as cf:
         headerorder = ['datetime', 'label']
         headerorder.extend(sorted(list(d.keys())))
-        print headerorder
+        print (headerorder)
         d['label'] = label
         d['datetime'] = datetime.datetime.now()
 

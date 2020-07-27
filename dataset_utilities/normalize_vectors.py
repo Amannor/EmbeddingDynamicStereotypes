@@ -2,6 +2,7 @@ import numpy as np
 import os
 import csv
 import re
+import ntpath
 
 def load_vectors(filename):
 	vectors = {}
@@ -28,7 +29,7 @@ def print_sizes(folder = '../vectors/normalized_clean/'):
 
 	for names in filenames_combined:
 		for name in names:
-			print name, find_vector_norms(load_vectors(name))
+			print (name, find_vector_norms(load_vectors(name)))
 
 def normalize(filename, filename_output):
 	vectors = {}
@@ -54,14 +55,18 @@ def normalize(filename, filename_output):
 							rowout[en] = float(rowout[en])/norm
 					writer.writerow(rowout)
 		fo.flush()
-	print countnorm0, countnormal
+	print (countnorm0, countnormal)
 
 def normalize_vectors():
-	folder = '../../vectors/ldc95/'
-	filenames_ldc95 = [folder + 'vectorsldc95_{}.txt'.format(x) for x in ['NYT', 'LATWP', 'REUFF', 'REUTE', 'WSJ']]
-	for name in filenames_ldc95:
-		filename_output = name.replace('ldc95/','normalized_clean/')
-		print name,filename_output
+	# folder = '../../vectors/ldc95/'
+	folder = '../sample_vectors/'
+	# filenames_ldc95 = [folder + 'vectorsldc95_{}.txt'.format(x) for x in ['NYT', 'LATWP', 'REUFF', 'REUTE', 'WSJ']]
+	filenames = [os.path.join(folder, x) for x in os.listdir(folder)]
+	filenames = list(filter(lambda fname: fname.endswith(".txt"), filenames))
+	for name in filenames:
+		# filename_output = name.replace('ldc95/','normalized_clean/')
+		filename_output = os.path.join(os.path.dirname(name),f'{ntpath.basename(name)}.normalized_clean')
+		print (name,filename_output)
 		normalize(name, filename_output)
 
 if __name__ == "__main__":
