@@ -27,7 +27,7 @@ def main(filenametodo = 'run_results/finalrun.csv'):
 
     rows = load_file(filenametodo)
 
-    print(rows.keys())
+    print(f"rows.keys() {rows.keys()}")
 
     plots_to_do_gender_static = [
         [scatter_occupation_percents_distances, [rows['google'], 'google', 'occupations1950', 'male_pairs', 'female_pairs', -1,'data/occupation_percentages_gender_occ1950.csv',load_occupationpercent_data, occupation_func_female_percent, [-.15, .15],[-100, 100], False, False, 'norm', 'png']],

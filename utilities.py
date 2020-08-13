@@ -146,17 +146,24 @@ def load_files(filenames):
     return rows
 def load_file(filename):
     rows = {}
-    with open(filename, 'r') as f:
-        reader = list(csv.reader(f))
+    with open(filename, 'r') as f: #(original line)
+    # with open(filename, 'r', encoding='utf-8') as f: #See https://stackoverflow.com/a/5181085
+        skipped = 0
+        # reader = list(csv.reader(f)) #(original line)
+        reader = list(csv.reader(f, delimiter = ' '))
         for en in range(len(reader)):
             reader[en] = [s.replace('nan', 'np.nan') for s in reader[en]]
         for en in range(0, len(reader), 2):
             try:
+                print(f"en {en} len(reader[en]) {len(reader[en])} reader[en + 1] {reader[en + 1]}")
+                print(f"range(2, len(reader[en])) {range(2, len(reader[en]))}")
                 rows[reader[en + 1][1]] = {reader[en][i]: eval(
                     reader[en + 1][i]) for i in range(2, len(reader[en]))}
             except Exception as e:
                 print(e)
+                skipped = skipped+1
                 continue
+        print(f"skipped {skipped} out of total {len(reader)/2}")
     return rows
 
 def differences(vec1, vec2):
