@@ -18,6 +18,8 @@ import copy
 import scipy
 from scipy.stats.stats import pearsonr
 from  more_itertools import unique_everseen
+import os
+import traceback
 sns.set(style="whitegrid") #TODO test this whitegrid, otherwise remove
 
 plotsfolder = 'plots/final/'
@@ -782,6 +784,9 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.tight_layout()
+    if not os.path.exists(plotsfolder):
+        os.makedirs(plotsfolder)
+        print("Created dir "+str(plotsfolder))
     plt.savefig(plotsfolder + 'scatterregression_{}{}.{}'.format(label, cistring, saveformat), dpi=1000)
     plt.close()
     # print((linregress(x, y)))
@@ -801,6 +806,10 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
         df = pd.DataFrame([y, yrs])
         df = df.transpose()
         df.columns = [ylabel, 'yr']
+        #According to an exception I go in the following (TypeError: unhashable type: 'numpy.ndarray'),
+        #seems to need to convert 'df' to 1 of 3 possiblities (array-like, Series, or DataFrame):
+        #https://pandas.pydata.org/pandas-docs/version/0.24/reference/api/pandas.get_dummies.html
+        print("#AM#2 type(df) {} df.dtypes {}".format(type(df), df.dtypes))
         dummies = pd.get_dummies(df, prefix = 'yr', columns = ['yr'])
         df['const'] = 1
         df.drop('yr', axis=1, inplace=True)
@@ -851,6 +860,10 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
     print(model.pvalues)
 
     df_save = summarize_model(model)
+    regressions_folder = "regressions"
+    if not os.path.exists(regressions_folder):
+        os.makedirs(regressions_folder)
+        print("Created dir "+str(regressions_folder))
     df_save.to_csv('regressions/{}.csv'.format(label))
 
 def summarize_model(model_result):
