@@ -55,11 +55,11 @@ def normalize(filename, filename_output):
 							rowout[en] = float(rowout[en])/norm
 					writer.writerow(rowout)
 		fo.flush()
-	print (countnorm0, countnormal)
+	print (f"countnorm0 {countnorm0} countnormal {countnormal}")
 
 def normalize_vectors():
 	# folder = '../../vectors/ldc95/'
-	folder = '../sample_vectors/'
+	folder = '../vectors/'
 	# filenames_ldc95 = [folder + 'vectorsldc95_{}.txt'.format(x) for x in ['NYT', 'LATWP', 'REUFF', 'REUTE', 'WSJ']]
 	filenames = [os.path.join(folder, x) for x in os.listdir(folder)]
 	filenames = list(filter(lambda fname: fname.endswith(".txt"), filenames))
@@ -67,7 +67,11 @@ def normalize_vectors():
 		# filename_output = name.replace('ldc95/','normalized_clean/')
 		filename_output = os.path.join(os.path.dirname(name),f'{ntpath.basename(name)}.normalized_clean')
 		print (name,filename_output)
-		normalize(name, filename_output)
+		try:
+			normalize(name, filename_output)
+		except Exception as e:
+			print(f"Exception: {e}")
+		
 
 if __name__ == "__main__":
 	normalize_vectors()
