@@ -4,6 +4,7 @@ import sys
 from cStringIO import StringIO
 import copy
 import datetime
+import pickle
 
 def cossim(v1, v2, signed = True):
     c = np.dot(v1, v2)/np.linalg.norm(v1)/np.linalg.norm(v2)
@@ -76,26 +77,27 @@ def calc_distance_over_time_averagevectorsfirst(vectors_over_time, words_to_aver
 
     return retbothaveraged, retfirstaveraged, retsecondaveraged
 
-def load_vectors(filename):
+def load_vectors(filename, words_set):
     print filename
     vectors = {}
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter = ' ')
         for row in reader:
-            vectors[row[0]] = [float(x) for x in row[1:] if len(x) >0]
+            if row[0] in words_set:
+                vectors[row[0]] = [float(x) for x in row[1:] if len(x) >0]
     return vectors
 
-def load_vectors_over_time(filenames):
+def load_vectors_over_time(filenames, words_set):
     vectors_over_time = []
     for f in filenames:
-        vectors_over_time.append(load_vectors(f))
+        vectors_over_time.append(load_vectors(f, words_set))
     return vectors_over_time
 
 def single_set_distances_to_single_set(vectors_mult, targetset, otherset, vocabd, word1lims = [50, 1e25], word2lims = [50, 1e25]):
     '''
     returns average distances of targetset to single set over the vectors_mult
 
-    also returns averages done in different way -- average targetset vectors before distancce to each, average
+    also returns averages done in different way -- average targetset vectors before distance to each, average
         otherset before each, AND average both and return a single value
     '''
     toset = [[] for _ in range(len(vectors_mult))]
@@ -159,11 +161,15 @@ def set_distances_to_set(vectors_mult, targetset, set0, set1, vocabd, word1lims 
     toset1_cossim = [np.mean(d) for d in toset1_cossim]
     return [toset0, toset0_cossim], [toset1, toset1_cossim]
 
-def load_vocab(fi):
+def load_vocab(fi, words_set=None):
     try:
+        res = dict()
         with open(fi, 'r') as f:
             reader = csv.reader(f, delimiter = ' ')
-            return {d[0]:float(d[1]) for d in reader}
+            for d in reader:
+                if words_set is None or d[0] in words_set:
+                    res[d[0]] = float(d[1])
+        return res
     except:
         return None
 
@@ -199,11 +205,25 @@ def get_vector_variance(vectors_over_time, words, vocabd = None, word1lims = [50
 
 def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['male_pairs', 'female_pairs'], do_individual_group_words = False, do_individual_neutral_words = False, do_cross_individual = False):
 
+    dt_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print("label {} started {}".format(label, dt_string))
+
+    cur_words_set = set()
+    for grouplist in group_lists:
+        with open('data/' + grouplist + '.txt', 'r') as f2:
+            groupwords = [x.strip() for x in list(f2)]
+            cur_words_set = cur_words_set.union(groupwords)
+
+    for neut in neutral_lists:
+        with open('data/'+neut + '.txt', 'r') as f:
+            neutwords = [x.strip() for x in list(f)]
+            cur_words_set = cur_words_set.union(neutwords)
+
     vocabs = [fi.replace('vectors/normalized_clean/vectors', 'vectors/normalized_clean/vocab/vocab') for fi in filenames]
-    vocabd = [load_vocab(fi) for fi in vocabs]
+    vocabd = [load_vocab(fi, cur_words_set) for fi in vocabs]
 
     d = {}
-    vectors_over_time = load_vectors_over_time(filenames)
+    vectors_over_time = load_vectors_over_time(filenames, cur_words_set)
     print('vocab size: ' + str([len(v.keys()) for v in vectors_over_time]))
     d['counts_all'] = {}
     d['variance_over_time'] = {}
@@ -253,6 +273,9 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             d['indiv_distances_neutral_'+neut] = dloc_neutral
 
+    with open("data_{}.json".format(label), 'w') as out_file:
+        pickle.dump(d, out_file)
+
     with open('run_results/'+csvname, 'ab') as cf:
         headerorder = ['datetime', 'label']
         headerorder.extend(sorted(list(d.keys())))
@@ -264,6 +287,11 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
         csvwriter.writeheader()
         csvwriter.writerow(d)
         cf.flush()
+
+    dt_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print("label {} finished {}".format(label, dt_string))
+
+csv.field_size_limit(int(sys.maxsize/(10**10)))
 
 folder = '../vectors/normalized_clean/'
 
