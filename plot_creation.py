@@ -19,7 +19,7 @@ import scipy
 from scipy.stats.stats import pearsonr
 from  more_itertools import unique_everseen
 import os
-import traceback
+
 sns.set(style="whitegrid") #TODO test this whitegrid, otherwise remove
 
 plotsfolder = 'plots/final/'
@@ -459,8 +459,7 @@ def plot_overtime_scatter(row, label='', neutral_words='', group1='male', group2
         if normalize_by_pairsdist:
             difs = [difs[en]/group_distances[en] for en in range(len(difs))]
         for ind, yr in enumerate(yrs):
-            if occup not in occpercents or np.isnan(difs[ind]) or np.isnan(occpercents[occup][ind]):
-                continue
+            if occup not in occpercents or np.isnan(difs[ind]) or np.isnan(occpercents[occup][ind]): continue
             occ_dist_all.append(difs[ind])
             occpercents_all.append(occpercents[occup][ind])
             yrs_all.append(yr)
@@ -776,18 +775,8 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
         sns.despine()
         cistring = 'noconfidenceintervals'
     else:
-        print("type(x) {} type(y) {}".format(type(x), type(y)))
         sns.regplot(x=x, y=y, scatter = True, scatter_kws = scatter_kws, truncate  = True)#,scatter_kws={"s": sizes})
         sns.despine()
-
-        # try:
-        #     sns.regplot(x=x, y=y, scatter = True, scatter_kws = scatter_kws, truncate  = True)#,scatter_kws={"s": sizes})
-        #     sns.despine()
-        # except Exception as e:
-        #     print("Exception {}".format(e))
-        #     print("type(x) {} type(y) {}".format(type(x), type(y)))
-        #     traceback.print_exc() #See https://stackoverflow.com/a/31444861
-        
 
     if ylim is not None: plt.ylim(ylim)
     if xlim is not None: plt.xlim(xlim)
@@ -817,17 +806,10 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
         df = pd.DataFrame([y, yrs])
         df = df.transpose()
         df.columns = [ylabel, 'yr']
-        #According to an exception I go in the following (TypeError: unhashable type: 'numpy.ndarray'),
-        #seems to need to convert 'df' to 1 of 3 possiblities (array-like, Series, or DataFrame):
-        #https://pandas.pydata.org/pandas-docs/version/0.19.2/generated/pandas.get_dummies.html
-        print("#AM#2 type(df) {} df.dtypes {} df.columns.values {}".format(type(df), df.dtypes, df.columns.values))
-        # hashable_df = [tuple(x) for x in df.columns.values] # See https://stackoverflow.com/a/9762084
-        # dummies = pd.get_dummies(hashable_df, prefix = 'yr', columns = ['yr'])
         dummies = pd.get_dummies(df, prefix = 'yr', columns = ['yr'])
         df['const'] = 1
         df.drop('yr', axis=1, inplace=True)
         df[dummies.columns] = dummies
-        # model = sm.OLS(df[ylabel], df[df.columns[1:]].astype(float)).fit() #.astype(float) because: https://stackoverflow.com/a/35463941
         model = sm.OLS(df[ylabel], df[df.columns[1:]]).fit()
         print(model.summary().as_latex())
         print(model.pvalues)
