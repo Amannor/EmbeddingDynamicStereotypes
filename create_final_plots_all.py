@@ -18,10 +18,14 @@ import copy
 import scipy
 from scipy.stats.stats import pearsonr
 from plot_creation import *
+from datetime import datetime
 
 pretty_axis_labels = {'male_pairs' : 'Men', 'female_pairs' : 'Women', 'names_asian' : 'Asian', 'names_white' : 'White', 'names_hispanic' : 'Hispanic'}
 
 def main(filenametodo = 'run_results/finalrun.csv'):
+    dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print("main started at: ", dt_string)
+
     plots_folder = 'plots/'
     set_plots_folder(plots_folder)
 
@@ -136,6 +140,9 @@ def main(filenametodo = 'run_results/finalrun.csv'):
     for plot in plots_to_do_appendix_racehispanic_static:
         print(plot[0], plot[1][1:])
         plot[0](*plot[1])
+
+    dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print("main finished successfully at: ", dt_string)
 
 
 main()
