@@ -276,6 +276,10 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
     with open("data_{}.json".format(label), 'w') as out_file:
         pickle.dump(d, out_file)
 
+    del cur_words_set
+    del vocabd
+    del vectors_over_time
+
     with open('run_results/'+csvname, 'ab') as cf:
         headerorder = ['datetime', 'label']
         headerorder.extend(sorted(list(d.keys())))
