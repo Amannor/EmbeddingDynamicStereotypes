@@ -130,6 +130,9 @@ def plot_averagebias_over_time_consistentoccupations(row, label='', neutral_word
         occfuncstr = 'None'
     else:
         occfuncstr = occ_func.savelabel
+    if not os.path.exists(plotsfolder):
+        os.makedirs(plotsfolder)
+        print("Created dir "+str(plotsfolder))
     plt.savefig(plotsfolder + '{}{}{}{}{}{}{}_overtimebiases_{}.pdf'.format(
         label, neutral_words, limit_words_file, group1, group2,normalize_by_pairsdist, occfuncstr, 'norm'))
     plt.close()
@@ -414,6 +417,10 @@ def create_cross_time_correlation_heatmap_differencestoself(row, label='', neutr
 #     print(difs_by_year)
 #     print(heatmap)
     test_phase_shift_heatmap(yrs_to_include, heatmap)
+    if len(heatmap[~np.isnan(heatmap)]) == 0:
+        print ("Skipping empty plot label {}, neutral_words {}, group1 {}, group2 {}, yrs_to_include {}, saveformat {}".format(label, neutral_words, group1, group2, yrs_to_include, saveformat))
+        return
+
     axx = sns.heatmap(heatmap, annot = True, fmt = ".2f", xticklabels = yrs_to_include, yticklabels = yrs_to_include, robust = True, cbar = False, cmap = 'YlGnBu', annot_kws={"color": 'black'})
     # plt.xlabel('Year')
     # plt.ylabel('Year')
@@ -425,6 +432,9 @@ def create_cross_time_correlation_heatmap_differencestoself(row, label='', neutr
         labelll.set_weight("bold")
     plt.yticks(rotation=0)
     plt.tight_layout()
+    if not os.path.exists(plotsfolder):
+        os.makedirs(plotsfolder)
+        print("Created dir "+str(plotsfolder))
     plt.savefig(plotsfolder + 'correlationheatmap_distancestoself{}{}{}{}.{}'.format(
         label, neutral_words, group1, group2, saveformat), dpi = 1000)
     plt.close()
@@ -533,6 +543,9 @@ def overtime_scatter_errorusingallotheryears(x, y, years_all, label, xlabel='', 
     plt.tight_layout()
     plt.grid(b = True)
     sns.despine()
+    if not os.path.exists(plotsfolder):
+        os.makedirs(plotsfolder)
+        print("Created dir "+str(plotsfolder))
     plt.savefig(plotsfolder + 'regression_allyears_withoutscatter{}.{}'.format(label, saveformat), dpi=1000)
     plt.close()
 
@@ -766,7 +779,7 @@ def plot_scatter_and_regression(x, y, label, xlabel = '', ylabel = '', sizes = N
     if yrs_for_regression is not None:
         yrs_order = list(sorted(set(yrs_for_regression)))
         pallete = sns.color_palette("hls", len(yrs_order))
-        color = [pallete[yrs_order.index(y)] for y in yrs_order]
+        color = [pallete[yrs_order.index(c_y)] for c_y in yrs_order]
         scatter_kws['color']= color
 
     cistring =''
