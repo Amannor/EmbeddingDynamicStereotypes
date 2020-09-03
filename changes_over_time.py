@@ -257,7 +257,7 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
                             dloc_neutral[word][grouplist] = single_set_distances_to_single_set(vectors_over_time, [word], groupwords, vocabd)
                     if do_individual_group_words:
                         d_group_so_far = d.get('indiv_distances_group_'+grouplist, {})
-                        for word in grouplist:
+                        for word in groupwords:
                             d_group_so_far[word] = d_group_so_far.get(word, {})
                             d_group_so_far[word][neut] = single_set_distances_to_single_set(vectors_over_time, neutwords,[word], vocabd)
                         d['indiv_distances_group_'+grouplist] = d_group_so_far
@@ -273,7 +273,7 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             d['indiv_distances_neutral_'+neut] = dloc_neutral
 
-    with open("data_{}.json".format(label), 'w') as out_file:
+    with open("data_{}.pkl".format(label), 'w') as out_file:
         pickle.dump(d, out_file)
 
     del cur_words_set
