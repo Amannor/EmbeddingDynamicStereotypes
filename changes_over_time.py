@@ -5,6 +5,7 @@ from cStringIO import StringIO
 import copy
 import datetime
 import pickle
+import os
 
 def cossim(v1, v2, signed = True):
     c = np.dot(v1, v2)/np.linalg.norm(v1)/np.linalg.norm(v2)
@@ -273,7 +274,12 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             d['indiv_distances_neutral_'+neut] = dloc_neutral
 
-    with open("data_mental_{}.pkl".format(label), 'w') as out_file:
+
+    data_folder ="data_latest"
+    if not os.path.exists(data_folder):
+        os.makedirs(data_folder)
+    full_path = os.path.join(data_folder, "data_mental_{}.pkl".format(label))
+    with open(full_path, 'w') as out_file:
         pickle.dump(d, out_file)
 
     del cur_words_set
