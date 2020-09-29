@@ -308,11 +308,12 @@ folder = '../vectors/normalized_clean/'
 filenames_nyt = [folder + 'vectorsnyt{}-{}.txt'.format(x, x+3) for x in range(1987, 2005, 1)]
 filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1810, 2010, 10)]
 filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1900, 2010, 10)]
-filenames_google = [folder + 'vectorsGoogleNews_exactclean.txt']
-filenames_wikipedia = [folder + 'vectorswikipedia.txt']
-filenames_commoncrawl = [folder + 'vectorscommoncrawlglove.txt']
+# filenames_google = [folder + 'vectorsGoogleNews_exactclean.txt']
+# filenames_wikipedia = [folder + 'vectorswikipedia.txt']
+# filenames_commoncrawl = [folder + 'vectorscommoncrawlglove.txt']
 
-filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd, 'google':filenames_google, 'wikipedia':filenames_wikipedia, 'commoncrawlglove':filenames_commoncrawl}
+# filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd, 'google':filenames_google, 'wikipedia':filenames_wikipedia, 'commoncrawlglove':filenames_commoncrawl}
+filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd}
 
 if __name__ == "__main__":
     param_filename = 'run_params.csv'
