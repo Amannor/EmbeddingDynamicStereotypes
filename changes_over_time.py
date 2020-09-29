@@ -273,7 +273,7 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
 
             d['indiv_distances_neutral_'+neut] = dloc_neutral
 
-    with open("data_{}.pkl".format(label), 'w') as out_file:
+    with open("data_mental_{}.pkl".format(label), 'w') as out_file:
         pickle.dump(d, out_file)
 
     del cur_words_set
@@ -300,8 +300,8 @@ csv.field_size_limit(int(sys.maxsize/(10**10)))
 folder = '../vectors/normalized_clean/'
 
 filenames_nyt = [folder + 'vectorsnyt{}-{}.txt'.format(x, x+3) for x in range(1987, 2005, 1)]
-filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1910, 2000, 10)]
-filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1910, 2000, 10)]
+filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1810, 2010, 10)]
+filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1900, 2010, 10)]
 filenames_google = [folder + 'vectorsGoogleNews_exactclean.txt']
 filenames_wikipedia = [folder + 'vectorswikipedia.txt']
 filenames_commoncrawl = [folder + 'vectorscommoncrawlglove.txt']
