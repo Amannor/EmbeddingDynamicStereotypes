@@ -1,0 +1,16 @@
+nyt
+===
+Count 0:
+cheerlessness
+intimitated
+
+Not count 0 but still had all NaN under 'mental_stigmas' in finalrun.csv
+catatonic
+melancholia - probably because it's under thetolerace of 50 count
+bummer - probably because it's under thetolerace of 50 count
+
+
+sgns
+====
+loathing
+spooked
