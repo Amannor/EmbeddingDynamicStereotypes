@@ -6,6 +6,7 @@ import copy
 import datetime
 import pickle
 import os
+import collections
 
 def cossim(v1, v2, signed = True):
     c = np.dot(v1, v2)/np.linalg.norm(v1)/np.linalg.norm(v2)
@@ -84,7 +85,7 @@ def load_vectors(filename, words_set):
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter = ' ')
         for row in reader:
-            if row[0] in words_set:
+            if words_set is None or len(words_set) ==0 or row[0] in words_set:
                 vectors[row[0]] = [float(x) for x in row[1:] if len(x) >0]
     return vectors
 
@@ -168,7 +169,7 @@ def load_vocab(fi, words_set=None):
         with open(fi, 'r') as f:
             reader = csv.reader(f, delimiter = ' ')
             for d in reader:
-                if words_set is None or d[0] in words_set:
+                if words_set is None or len(words_set) == 0 or d[0] in words_set:
                     res[d[0]] = float(d[1])
         return res
     except:
@@ -204,21 +205,103 @@ def get_vector_variance(vectors_over_time, words, vocabd = None, word1lims = [50
 
     return variances
 
+def get_top_closest_words(vectors_over_time, vocabd, max_size = 50, target_words = ['anxiety', 'depression', 'schizophrenia', 'schizophrenic', 'dementia', 'demented', 'psychosis', 'psychotic'], convert_to_str=True):
+    '''
+    :param vectors_over_time:
+    :param vocabd:
+    :param max_size:
+    :param target_words:
+    :return:
+    target_words_to_closest_words which is a dictionary. The keys are each of 'target_words' plus an additional key that's all the words in 'target_words_to_closest_words' combined.
+        Each list is the size of len(vocabd) (which should be identical to len(vectors_over_time).
+            Each member of that list is an ordered dictionary (of max_size). Each key is a 2-tuple; The first member is the Euclidean distance, the second member is the soine similarity.
+                Each value of that dict is a set of words that are in have that distance and cosine similarity to the target_word in this specific time period
+    '''
+    target_words_to_closest_words = dict()
+    target_words_to_closest_words['entire_mental_words'] = [[] for _ in range(len(vocabd))]
+    for t_word in target_words:
+        target_words_to_closest_words[t_word] = [[] for _ in range(len(vocabd))]
+
+    for i in range(len(vocabd)):
+        print("Analyzing time period no. {}".format(i))
+        target_words_to_closest_words['entire_mental_words'][i] = collections.OrderedDict()
+        for target_word in target_words:
+            target_words_to_closest_words[target_word][i] = collections.OrderedDict()
+        for vocab_word in vocabd[i]:
+            if not (vocab_word in target_words):
+                distances = single_set_distances_to_single_set([vectors_over_time[i]], [vocab_word], target_words, vocabd)
+                if not (np.isnan(distances[0][0]) or np.isnan(distances[1][0])):
+                    euclidean_and_cosim = distances[0][0], distances[1][0]
+                    if euclidean_and_cosim not in target_words_to_closest_words['entire_mental_words'][i]:
+                        target_words_to_closest_words['entire_mental_words'][i][euclidean_and_cosim] = set()
+                    target_words_to_closest_words['entire_mental_words'][i][euclidean_and_cosim].add(vocab_word)
+                    target_words_to_closest_words['entire_mental_words'][i] = collections.OrderedDict(sorted(target_words_to_closest_words['entire_mental_words'][i].items(), key=lambda t: t[0]))
+                    while len(target_words_to_closest_words['entire_mental_words'][i]) > max_size:
+                        key_to_pop = target_words_to_closest_words['entire_mental_words'][i].keys()[len(target_words_to_closest_words['entire_mental_words'][i])-1]
+                        target_words_to_closest_words['entire_mental_words'][i].pop(key_to_pop)
+
+            for target_word in target_words:
+                if target_word.lower() == vocab_word.lower():
+                    continue
+                distances = single_set_distances_to_single_set([vectors_over_time[i]], [vocab_word], [target_word], vocabd)
+                if np.isnan(distances[0][0]) or np.isnan(distances[1][0]):
+                    continue
+                euclidean_and_cosim = distances[0][0], distances[1][0]
+                if euclidean_and_cosim not in target_words_to_closest_words[target_word][i]:
+                    target_words_to_closest_words[target_word][i][euclidean_and_cosim]= set()
+                target_words_to_closest_words[target_word][i][euclidean_and_cosim].add(vocab_word)
+                target_words_to_closest_words[target_word][i] = collections.OrderedDict(sorted(target_words_to_closest_words[target_word][i].items(), key=lambda t: t[0]))
+                while len(target_words_to_closest_words[target_word][i]) > max_size:
+                    key_to_pop = target_words_to_closest_words[target_word][i].keys()[len(target_words_to_closest_words[target_word][i]) - 1]
+                    target_words_to_closest_words[target_word][i].pop(key_to_pop)
+
+    if(convert_to_str):
+        for t_word in target_words_to_closest_words.keys():
+            for i in range(len(target_words_to_closest_words[t_word])):
+                dict_items = target_words_to_closest_words[t_word][i].items()
+                target_words_to_closest_words[t_word][i] = {str(key): str(value) for key, value in dict_items}
+
+
+
+
+    # This is by calling directly calc_distance_between_words()
+    # for target_word in target_words:
+    #     target_words_to_closest_words[target_word] = []
+    #     for i in range(len(vocabd)):
+    #         distance_to_vocab_word = collections.OrderedDict()
+    #         for vocab_word in vocabd[i]:
+    #             cur_distance = calc_distance_between_words(vectors_over_time[i], target_word, vocab_word)
+    #             if cur_distance not in distance_to_vocab_word:
+    #                 distance_to_vocab_word[cur_distance] = set()
+    #             distance_to_vocab_word[cur_distance].add(vocab_word)
+    #             while len(distance_to_vocab_word) >= max_size:
+    #                 distance_to_vocab_word.pop(distance_to_vocab_word.keys()[len(distance_to_vocab_word)-1])
+    #         target_words_to_closest_words[target_word].append(distance_to_vocab_word)
+    # #Todo: Add another one per vectors set that checks the distnace between the *set of words* target_words to each one in vocabd
+    return target_words_to_closest_words
+
+
+
+
+
+
+
+
 def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['male_pairs', 'female_pairs'], do_individual_group_words = False, do_individual_neutral_words = False, do_cross_individual = False):
 
     dt_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print("label {} started {}".format(label, dt_string))
 
     cur_words_set = set()
-    for grouplist in group_lists:
-        with open('data/' + grouplist + '.txt', 'r') as f2:
-            groupwords = [x.strip() for x in list(f2)]
-            cur_words_set = cur_words_set.union(groupwords)
-
-    for neut in neutral_lists:
-        with open('data/'+neut + '.txt', 'r') as f:
-            neutwords = [x.strip() for x in list(f)]
-            cur_words_set = cur_words_set.union(neutwords)
+    # for grouplist in group_lists:
+    #     with open('data/' + grouplist + '.txt', 'r') as f2:
+    #         groupwords = [x.strip() for x in list(f2)]
+    #         cur_words_set = cur_words_set.union(groupwords)
+    #
+    # for neut in neutral_lists:
+    #     with open('data/'+neut + '.txt', 'r') as f:
+    #         neutwords = [x.strip() for x in list(f)]
+    #         cur_words_set = cur_words_set.union(neutwords)
 
     vocabs = [fi.replace('vectors/normalized_clean/vectors', 'vectors/normalized_clean/vocab/vocab') for fi in filenames]
     vocabd = [load_vocab(fi, cur_words_set) for fi in vocabs]
@@ -229,74 +312,84 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
     d['counts_all'] = {}
     d['variance_over_time'] = {}
 
-    for grouplist in group_lists:
-        with open('data/'+grouplist + '.txt', 'r') as f2:
-            groupwords = [x.strip() for x in list(f2)]
-            d['counts_all'][grouplist] = get_counts_dictionary(vocabd, groupwords)
-            d['variance_over_time'][grouplist] = get_vector_variance(vectors_over_time, groupwords)
+    top_closest_words = get_top_closest_words(vectors_over_time, vocabd)
 
-    for neuten, neut in enumerate(neutral_lists):
-        with open('data/'+neut + '.txt', 'r') as f:
-            neutwords = [x.strip() for x in list(f)]
-
-            d['counts_all'][neut] = get_counts_dictionary(vocabd, neutwords)
-            d['variance_over_time'][neut] = get_vector_variance(vectors_over_time, neutwords)
-
-            dloc_neutral = {}
-
-            for grouplist in group_lists:
-                with open('data/'+grouplist + '.txt', 'r') as f2:
-                    print neut, grouplist
-                    groupwords = [x.strip() for x in list(f2)]
-                    distances = single_set_distances_to_single_set(vectors_over_time, neutwords, groupwords, vocabd)
-
-                    d[neut+'_'+grouplist] = distances
-
-                    if do_individual_neutral_words:
-                        for word in neutwords:
-                            dloc_neutral[word] = dloc_neutral.get(word, {})
-                            dloc_neutral[word][grouplist] = single_set_distances_to_single_set(vectors_over_time, [word], groupwords, vocabd)
-                    if do_individual_group_words:
-                        d_group_so_far = d.get('indiv_distances_group_'+grouplist, {})
-                        for word in groupwords:
-                            d_group_so_far[word] = d_group_so_far.get(word, {})
-                            d_group_so_far[word][neut] = single_set_distances_to_single_set(vectors_over_time, neutwords,[word], vocabd)
-                        d['indiv_distances_group_'+grouplist] = d_group_so_far
-
-                    if do_cross_individual:
-                        d_cross = {}
-                        for word in groupwords:
-                            d_cross[word] = {}
-                            for neutword in neutwords:
-                                d_cross[word][neutword] = single_set_distances_to_single_set(vectors_over_time, [neutword],[word], vocabd)
-                        d['indiv_distances_cross_'+grouplist+'_'+neut] = d_cross
-
-
-            d['indiv_distances_neutral_'+neut] = dloc_neutral
-
-
-    data_folder ="data_latest"
+    data_folder ="top_closest_words"
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
-    full_path = os.path.join(data_folder, "data_mental_{}.pkl".format(label))
+    full_path = os.path.join(data_folder, "top_closest_words_{}.pkl".format(label))
     with open(full_path, 'w') as out_file:
-        pickle.dump(d, out_file)
+        pickle.dump(top_closest_words, out_file)
+
+    #
+    # for grouplist in group_lists:
+    #     with open('data/'+grouplist + '.txt', 'r') as f2:
+    #         groupwords = [x.strip() for x in list(f2)]
+    #         d['counts_all'][grouplist] = get_counts_dictionary(vocabd, groupwords)
+    #         d['variance_over_time'][grouplist] = get_vector_variance(vectors_over_time, groupwords)
+    #
+    # for neuten, neut in enumerate(neutral_lists):
+    #     with open('data/'+neut + '.txt', 'r') as f:
+    #         neutwords = [x.strip() for x in list(f)]
+    #
+    #         d['counts_all'][neut] = get_counts_dictionary(vocabd, neutwords)
+    #         d['variance_over_time'][neut] = get_vector_variance(vectors_over_time, neutwords)
+    #
+    #         dloc_neutral = {}
+    #
+    #         for grouplist in group_lists:
+    #             with open('data/'+grouplist + '.txt', 'r') as f2:
+    #                 print neut, grouplist
+    #                 groupwords = [x.strip() for x in list(f2)]
+    #                 distances = single_set_distances_to_single_set(vectors_over_time, neutwords, groupwords, vocabd)
+    #
+    #                 d[neut+'_'+grouplist] = distances
+    #
+    #                 if do_individual_neutral_words:
+    #                     for word in neutwords:
+    #                         dloc_neutral[word] = dloc_neutral.get(word, {})
+    #                         dloc_neutral[word][grouplist] = single_set_distances_to_single_set(vectors_over_time, [word], groupwords, vocabd)
+    #                 if do_individual_group_words:
+    #                     d_group_so_far = d.get('indiv_distances_group_'+grouplist, {})
+    #                     for word in groupwords:
+    #                         d_group_so_far[word] = d_group_so_far.get(word, {})
+    #                         d_group_so_far[word][neut] = single_set_distances_to_single_set(vectors_over_time, neutwords,[word], vocabd)
+    #                     d['indiv_distances_group_'+grouplist] = d_group_so_far
+    #
+    #                 if do_cross_individual:
+    #                     d_cross = {}
+    #                     for word in groupwords:
+    #                         d_cross[word] = {}
+    #                         for neutword in neutwords:
+    #                             d_cross[word][neutword] = single_set_distances_to_single_set(vectors_over_time, [neutword],[word], vocabd)
+    #                     d['indiv_distances_cross_'+grouplist+'_'+neut] = d_cross
+    #
+    #
+    #         d['indiv_distances_neutral_'+neut] = dloc_neutral
+    #
+    #
+    # data_folder ="data_latest"
+    # if not os.path.exists(data_folder):
+    #     os.makedirs(data_folder)
+    # full_path = os.path.join(data_folder, "data_mental_{}.pkl".format(label))
+    # with open(full_path, 'w') as out_file:
+    #     pickle.dump(d, out_file)
 
     del cur_words_set
     del vocabd
     del vectors_over_time
 
-    with open('run_results/'+csvname, 'ab') as cf:
-        headerorder = ['datetime', 'label']
-        headerorder.extend(sorted(list(d.keys())))
-        print headerorder
-        d['label'] = label
-        d['datetime'] = datetime.datetime.now()
-
-        csvwriter = csv.DictWriter(cf, fieldnames = headerorder)
-        csvwriter.writeheader()
-        csvwriter.writerow(d)
-        cf.flush()
+    # with open('run_results/'+csvname, 'ab') as cf:
+    #     headerorder = ['datetime', 'label']
+    #     headerorder.extend(sorted(list(d.keys())))
+    #     print headerorder
+    #     d['label'] = label
+    #     d['datetime'] = datetime.datetime.now()
+    #
+    #     csvwriter = csv.DictWriter(cf, fieldnames = headerorder)
+    #     csvwriter.writeheader()
+    #     csvwriter.writerow(d)
+    #     cf.flush()
 
     dt_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print("label {} finished {}".format(label, dt_string))
@@ -307,7 +400,7 @@ folder = '../vectors/normalized_clean/'
 
 filenames_nyt = [folder + 'vectorsnyt{}-{}.txt'.format(x, x+3) for x in range(1987, 2005, 1)]
 filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1810, 2010, 10)]
-filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1900, 2010, 10)]
+filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1810, 2010, 10)]
 # filenames_google = [folder + 'vectorsGoogleNews_exactclean.txt']
 # filenames_wikipedia = [folder + 'vectorswikipedia.txt']
 # filenames_commoncrawl = [folder + 'vectorscommoncrawlglove.txt']

@@ -2,7 +2,7 @@ import pickle
 import os
 import json
 
-folder_name = "data_latest"
+folder_name = "top_closest_words"
 
 for filename in os.listdir(folder_name):
 	if filename.endswith(".pkl"):
