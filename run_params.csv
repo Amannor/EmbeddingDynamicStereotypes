@@ -1,7 +1,3 @@
 label,csvname,neutral_lists,group_lists,do_individual_neutral_words,do_individual_group_words
-nyt,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE
-commoncrawlglove,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE
-google,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE
-wikipedia,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE
 sgns,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE
 svd,finalrun_expansion.csv,['mental_stigmas'],"['words_mental','words_physical']",TRUE,TRUE

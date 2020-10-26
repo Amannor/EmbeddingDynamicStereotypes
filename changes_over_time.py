@@ -7,6 +7,7 @@ import datetime
 import pickle
 import os
 import collections
+import json
 
 def cossim(v1, v2, signed = True):
     c = np.dot(v1, v2)/np.linalg.norm(v1)/np.linalg.norm(v2)
@@ -223,11 +224,16 @@ def get_top_closest_words(vectors_over_time, vocabd, max_size = 50, target_words
         target_words_to_closest_words[t_word] = [[] for _ in range(len(vocabd))]
 
     for i in range(len(vocabd)):
-        print("Analyzing time period no. {}".format(i))
+        dt_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        print("Analyzing time period no. {} at: {}".format(i, dt_string))
         target_words_to_closest_words['entire_mental_words'][i] = collections.OrderedDict()
         for target_word in target_words:
             target_words_to_closest_words[target_word][i] = collections.OrderedDict()
+        j=1
         for vocab_word in vocabd[i]:
+            if(j%10000 == 0 or j == len(vocabd[i])):
+                print("Word {} out of {}".format(j, len(vocabd[i])))
+            j=j+1
             if not (vocab_word in target_words):
                 distances = single_set_distances_to_single_set([vectors_over_time[i]], [vocab_word], target_words, vocabd)
                 if not (np.isnan(distances[0][0]) or np.isnan(distances[1][0])):
@@ -237,7 +243,7 @@ def get_top_closest_words(vectors_over_time, vocabd, max_size = 50, target_words
                     target_words_to_closest_words['entire_mental_words'][i][euclidean_and_cosim].add(vocab_word)
                     target_words_to_closest_words['entire_mental_words'][i] = collections.OrderedDict(sorted(target_words_to_closest_words['entire_mental_words'][i].items(), key=lambda t: t[0]))
                     while len(target_words_to_closest_words['entire_mental_words'][i]) > max_size:
-                        key_to_pop = target_words_to_closest_words['entire_mental_words'][i].keys()[len(target_words_to_closest_words['entire_mental_words'][i])-1]
+                        key_to_pop = target_words_to_closest_words['entire_mental_words'][i].keys()[len(target_words_to_closest_words['entire_mental_words'][i]) - 1]
                         target_words_to_closest_words['entire_mental_words'][i].pop(key_to_pop)
 
             for target_word in target_words:
@@ -259,7 +265,11 @@ def get_top_closest_words(vectors_over_time, vocabd, max_size = 50, target_words
         for t_word in target_words_to_closest_words.keys():
             for i in range(len(target_words_to_closest_words[t_word])):
                 dict_items = target_words_to_closest_words[t_word][i].items()
-                target_words_to_closest_words[t_word][i] = {str(key): str(value) for key, value in dict_items}
+                target_words_to_closest_words[t_word][i] = collections.OrderedDict()
+                for key, value in sorted(dict_items):
+                    target_words_to_closest_words[t_word][i][(str(key))] = ', '.join(value)
+
+                # target_words_to_closest_words[t_word][i] = {str(key): str(value) for key, value in sorted(dict_items)}
 
 
 
@@ -317,9 +327,12 @@ def main(filenames, label, csvname = None, neutral_lists = [], group_lists = ['m
     data_folder ="top_closest_words"
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
-    full_path = os.path.join(data_folder, "top_closest_words_{}.pkl".format(label))
-    with open(full_path, 'w') as out_file:
-        pickle.dump(top_closest_words, out_file)
+    full_path = os.path.join(data_folder, "top_closest_words_{}.json".format(label))
+    with open(full_path, "w") as outfile:
+        json.dump(top_closest_words, outfile, indent=4)
+    # full_path = os.path.join(data_folder, "top_closest_words_{}.pkl".format(label))
+    # with open(full_path, 'w') as out_file:
+    #     pickle.dump(top_closest_words, out_file)
 
     #
     # for grouplist in group_lists:
@@ -399,14 +412,15 @@ csv.field_size_limit(int(sys.maxsize/(10**10)))
 folder = '../vectors/normalized_clean/'
 
 filenames_nyt = [folder + 'vectorsnyt{}-{}.txt'.format(x, x+3) for x in range(1987, 2005, 1)]
-filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1810, 2010, 10)]
-filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1810, 2010, 10)]
+filenames_sgns = [folder + 'vectors_sgns{}.txt'.format(x) for x in range(1910, 2000, 10)] #Todo: need to create vocab files for 1810-1900, 2000
+filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1910, 2000, 10)] #Todo: need to create vocab files for 1810-1900, 2000
 # filenames_google = [folder + 'vectorsGoogleNews_exactclean.txt']
 # filenames_wikipedia = [folder + 'vectorswikipedia.txt']
 # filenames_commoncrawl = [folder + 'vectorscommoncrawlglove.txt']
 
 # filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd, 'google':filenames_google, 'wikipedia':filenames_wikipedia, 'commoncrawlglove':filenames_commoncrawl}
-filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd}
+# filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd}
+filename_map = {'sgns' : filenames_sgns, 'svd': filenames_svd}
 
 if __name__ == "__main__":
     param_filename = 'run_params.csv'
