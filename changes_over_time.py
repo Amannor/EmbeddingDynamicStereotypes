@@ -1,10 +1,10 @@
 import csv
 import numpy as np
 import sys
-from cStringIO import StringIO
-import copy
+# from cStringIO import StringIO
+# import copy
 import datetime
-import pickle
+# import pickle
 import os
 import collections
 import json
@@ -16,14 +16,14 @@ def cossim(v1, v2, signed = True):
     return c
 
 def calc_distance_between_vectors(vec1, vec2, distype = 'norm'):
-    if distype is 'norm':
+    if distype == 'norm':
         return np.linalg.norm(np.subtract(vec1, vec2))
     else:
         return cossim(vec1, vec2)
 
 def calc_distance_between_words(vectors, word1, word2, distype = 'norm'):
         if word1 in vectors and word2 in vectors:
-            if distype is 'norm':
+            if distype == 'norm':
                 return np.linalg.norm(np.subtract(vectors[word1], vectors[word2]))
             else:
                 return cossim(vectors[word1], vectors[word2])
@@ -81,7 +81,7 @@ def calc_distance_over_time_averagevectorsfirst(vectors_over_time, words_to_aver
     return retbothaveraged, retfirstaveraged, retsecondaveraged
 
 def load_vectors(filename, words_set):
-    print filename
+    print (filename)
     vectors = {}
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter = ' ')
@@ -420,7 +420,7 @@ filenames_svd = [folder + 'vectors_svd{}.txt'.format(x) for x in range(1910, 200
 
 # filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd, 'google':filenames_google, 'wikipedia':filenames_wikipedia, 'commoncrawlglove':filenames_commoncrawl}
 # filename_map = {'nyt' : filenames_nyt, 'sgns' : filenames_sgns, 'svd': filenames_svd}
-filename_map = {'sgns' : filenames_sgns, 'svd': filenames_svd}
+filename_map = {'sgns' : filenames_sgns}
 
 if __name__ == "__main__":
     param_filename = 'run_params.csv'
